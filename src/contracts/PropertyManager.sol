@@ -1,3 +1,4 @@
+// src/contracts/PropertyManager.sol
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
@@ -60,7 +61,7 @@ contract PropertyManager is Ownable, ReentrancyGuard, Pausable {
         _;
     }
 
-    constructor() Ownable(msg.sender) {}
+    constructor() Ownable() {}
 
     function addProperty(
         uint256 _rentAmount,
@@ -167,6 +168,4 @@ contract PropertyManager is Ownable, ReentrancyGuard, Pausable {
         _unpause();
     }
 }
-
-
 
