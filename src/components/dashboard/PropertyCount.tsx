@@ -1,51 +1,34 @@
-// src/dashboard/components/Stats/PropertyCount.tsx
+// src/components/dashboard/PropertyCount.tsx
+'use client'
+
+import { usePropertyCount } from '@/hooks/usePropertyManager'
+import { Building2 } from 'lucide-react'
+
 export default function PropertyCount() {
- return (
-   <Card>
-     <CardContent className="p-6">
-       <div className="flex items-center">
-         <Building2 className="h-8 w-8 text-blue-600" />
-         <div className="ml-4">
-           <p className="text-sm font-medium text-gray-500">Total Properties</p>
-           <p className="text-2xl font-semibold">12</p>
-         </div>
-       </div>
-     </CardContent>
-   </Card>
- );
-}
+  const { data: propertyCount, isError, isLoading } = usePropertyCount()
 
-// src/dashboard/components/Stats/Occupancy.tsx
-export default function Occupancy() {
- return (
-   <Card>
-     <CardContent className="p-6">
-       <div className="flex items-center">
-         <Key className="h-8 w-8 text-green-600" />
-         <div className="ml-4">
-           <p className="text-sm font-medium text-gray-500">Occupancy Rate</p>
-           <p className="text-2xl font-semibold">85%</p>
-         </div>
-       </div>
-     </CardContent>
-   </Card>
- );
-}
-
-// src/dashboard/components/Stats/Revenue.tsx
-export default function Revenue() {
- return (
-   <Card>
-     <CardContent className="p-6">
-       <div className="flex items-center">
-         <DollarSign className="h-8 w-8 text-purple-600" />
-         <div className="ml-4">
-           <p className="text-sm font-medium text-gray-500">Monthly Revenue</p>
-           <p className="text-2xl font-semibold">$24,500</p>
-         </div>
-       </div>
-     </CardContent>
-   </Card>
- );
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-medium text-gray-900">Total Properties</h3>
+          <div className="mt-1">
+            {isLoading ? (
+              <p className="text-2xl font-semibold text-gray-600">Loading...</p>
+            ) : isError ? (
+              <p className="text-2xl font-semibold text-red-600">Error loading count</p>
+            ) : (
+              <p className="text-2xl font-semibold text-gray-900">
+                {propertyCount?.toString() || '0'}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="p-3 bg-blue-100 rounded-full">
+          <Building2 className="h-6 w-6 text-blue-600" />
+        </div>
+      </div>
+    </div>
+  )
 }
 
