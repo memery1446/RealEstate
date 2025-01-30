@@ -3,7 +3,7 @@ import PropertyCount from './components/Stats/PropertyCount';
 import Occupancy from './components/Stats/Occupancy';
 import Revenue from './components/Stats/Revenue';
 import AlertList from './components/Alerts/AlertList';
-import QuickActions from './components/Actions/QuickActions';
+import QuickActions from './components/dashboard/QuickActions';
 import DashboardLayout from './layout/DashboardLayout';
 
 export default function Dashboard() {

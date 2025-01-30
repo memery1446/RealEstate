@@ -1,39 +1,55 @@
-// src/dashboard/components/Stats/Occupancy.tsx
-import { Percent, Home, DoorOpen } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+'use client'
+
+import { usePropertyCount, useProperty } from '@/hooks/usePropertyManager'
+import { useState, useEffect } from 'react'
 
 export default function Occupancy() {
- const stats = {
-   total: 20,
-   occupied: 17,
-   rate: 85,
-   avgDuration: '14 months'
- };
+  const { data: propertyCount } = usePropertyCount()
+  const [rate, setRate] = useState<string>("Loading...")
+  const [isCalculating, setIsCalculating] = useState(true)
 
- return (
-   <Card>
-     <CardContent className="p-6">
-       <div className="space-y-4">
-         <div className="flex justify-between items-center">
-           <div>
-             <p className="text-sm font-medium text-gray-500">Occupancy Rate</p>
-             <p className="text-2xl font-semibold">{stats.rate}%</p>
-           </div>
-           <Home className="h-8 w-8 text-green-600" />
-         </div>
-         <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-           <div>
-             <p className="text-sm text-gray-500">Occupied Units</p>
-             <p className="font-medium">{stats.occupied}/{stats.total}</p>
-           </div>
-           <div>
-             <p className="text-sm text-gray-500">Avg. Tenancy</p>
-             <p className="font-medium">{stats.avgDuration}</p>
-           </div>
-         </div>
-       </div>
-     </CardContent>
-   </Card>
- );
+  useEffect(() => {
+    async function calculateOccupancy() {
+      if (!propertyCount) {
+        setRate("0.0%")
+        setIsCalculating(false)
+        return
+      }
+      
+      let rentedCount = 0
+      const count = Number(propertyCount)
+      
+      // Only proceed with calculation if there are properties
+      if (count > 0) {
+        for (let i = 1; i <= count; i++) {
+          const property = await useProperty(BigInt(i))
+          if (property && property.status === 1) { // 1 = PropertyStatus.Rented
+            rentedCount++
+          }
+        }
+        const occupancyRate = (rentedCount / count) * 100
+        setRate(`${occupancyRate.toFixed(1)}%`)
+      } else {
+        setRate("0.0%")
+      }
+      
+      setIsCalculating(false)
+    }
+
+    calculateOccupancy()
+  }, [propertyCount])
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900">Occupancy Rate</h3>
+        <div className="mt-1">
+          <p className="text-2xl font-semibold text-gray-900">
+            {rate}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
 }
 

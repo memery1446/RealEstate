@@ -1,39 +1,55 @@
-// src/dashboard/components/Stats/Revenue.tsx
-import { DollarSign, TrendingUp, AlertCircle } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+'use client'
+
+import { usePropertyCount, useProperty } from '@/hooks/usePropertyManager'
+import { useState, useEffect } from 'react'
 
 export default function Revenue() {
- const stats = {
-   monthly: 24500,
-   growth: 8.2,
-   pending: 3200,
-   overdue: 1500
- };
+  const { data: propertyCount } = usePropertyCount()
+  const [revenue, setRevenue] = useState<string>("Loading...")
+  const [isCalculating, setIsCalculating] = useState(true)
 
- return (
-   <Card>
-     <CardContent className="p-6">
-       <div className="space-y-4">
-         <div className="flex justify-between items-center">
-           <div>
-             <p className="text-sm font-medium text-gray-500">Monthly Revenue</p>
-             <p className="text-2xl font-semibold">${stats.monthly.toLocaleString()}</p>
-           </div>
-           <TrendingUp className="h-8 w-8 text-purple-600" />
-         </div>
-         <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-           <div>
-             <p className="text-sm text-gray-500">Growth</p>
-             <p className="font-medium text-green-600">+{stats.growth}%</p>
-           </div>
-           <div>
-             <p className="text-sm text-gray-500">Pending</p>
-             <p className="font-medium text-yellow-600">${stats.pending}</p>
-           </div>
-         </div>
-       </div>
-     </CardContent>
-   </Card>
- );
+  useEffect(() => {
+    async function calculateRevenue() {
+      if (!propertyCount) {
+        setRevenue("0 ETH")
+        setIsCalculating(false)
+        return
+      }
+
+      let totalRevenue = BigInt(0)
+      const count = Number(propertyCount)
+
+      if (count > 0) {
+        for (let i = 1; i <= count; i++) {
+          const property = await useProperty(BigInt(i))
+          if (property && property.status === 1) { // Rented
+            totalRevenue += property.rentAmount
+          }
+        }
+        // Convert wei to ETH for display
+        const ethValue = Number(totalRevenue) / 1e18
+        setRevenue(`${ethValue.toFixed(4)} ETH`)
+      } else {
+        setRevenue("0 ETH")
+      }
+
+      setIsCalculating(false)
+    }
+
+    calculateRevenue()
+  }, [propertyCount])
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900">Monthly Revenue</h3>
+        <div className="mt-1">
+          <p className="text-2xl font-semibold text-gray-900">
+            {revenue}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
 }
 

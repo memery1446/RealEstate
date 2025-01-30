@@ -4,6 +4,7 @@
 import { useContractRead, useContractWrite, usePrepareContractWrite } from 'wagmi'
 import { PropertyManagerABI } from '@/contracts/abis/PropertyManager'
 import { PROPERTY_MANAGER_ADDRESS } from '@/constants/contracts'
+import { parseEther } from 'viem'
 
 // Read hooks
 export function usePropertyCount() {
@@ -25,14 +26,28 @@ export function useProperty(propertyId: bigint) {
   })
 }
 
-// Write hooks
-export function useAddProperty() {
+export function useAddProperty(rentAmount?: string, securityDeposit?: string) {
   const { config } = usePrepareContractWrite({
     address: PROPERTY_MANAGER_ADDRESS,
     abi: PropertyManagerABI,
     functionName: 'addProperty',
+    args: rentAmount && securityDeposit 
+      ? [parseEther(rentAmount), parseEther(securityDeposit)]
+      : undefined,
+    enabled: Boolean(rentAmount && securityDeposit),
   })
-  return useContractWrite(config)
+
+  const { 
+    writeAsync,
+    isLoading,
+    isSuccess,
+  } = useContractWrite(config)
+
+  return { 
+    addProperty: writeAsync,
+    isLoading,
+    isSuccess,
+  }
 }
 
 export function useInitiateLease() {
