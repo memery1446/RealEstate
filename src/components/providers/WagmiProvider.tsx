@@ -1,3 +1,4 @@
+// src/app/components/provider/WagmiProvider.tsx
 'use client'
 
 import { WagmiConfig, createConfig, configureChains } from 'wagmi'
@@ -5,7 +6,7 @@ import { Chain } from 'wagmi/chains'
 import { publicProvider } from 'wagmi/providers/public'
 
 const hardhat: Chain = {
-  id: 31337,
+  id: 1337,  // Matches your MetaMask
   name: 'Hardhat',
   network: 'hardhat',
   nativeCurrency: {
@@ -14,23 +15,24 @@ const hardhat: Chain = {
     symbol: 'ETH',
   },
   rpcUrls: {
-    default: { 
-      http: ['http://127.0.0.1:8545'] 
+    default: {
+      http: ['http://127.0.0.1:8545']
     },
-    public: { 
-      http: ['http://127.0.0.1:8545'] 
+    public: {
+      http: ['http://127.0.0.1:8545']
     }
   }
 }
 
-const { chains, publicClient } = configureChains(
+const { chains, publicClient, webSocketPublicClient } = configureChains(
   [hardhat],
   [publicProvider()]
 )
 
 const config = createConfig({
   autoConnect: true,
-  publicClient
+  publicClient,
+  webSocketPublicClient
 })
 
 export function WagmiProvider({ children }: { children: React.ReactNode }) {

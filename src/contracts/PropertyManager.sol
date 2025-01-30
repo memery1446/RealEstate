@@ -63,6 +63,11 @@ contract PropertyManager is Ownable, ReentrancyGuard, Pausable {
 
     constructor() Ownable() {}
 
+        // TEST
+    function testConnection() public pure returns (bool) {
+        return true;
+    }
+
     function addProperty(
         uint256 _rentAmount,
         uint256 _securityDeposit

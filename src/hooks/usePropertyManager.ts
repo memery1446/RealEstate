@@ -26,27 +26,42 @@ export function useProperty(propertyId: bigint) {
   })
 }
 
+// src/hooks/usePropertyManager.ts
 export function useAddProperty(rentAmount?: string, securityDeposit?: string) {
-  const { config } = usePrepareContractWrite({
+  const rentInWei = rentAmount ? parseEther(rentAmount) : undefined
+  const depositInWei = securityDeposit ? parseEther(securityDeposit) : undefined
+
+  console.log('Preparing values:', {
+    rentInWei: rentInWei?.toString(),
+    depositInWei: depositInWei?.toString()
+  })
+
+  const { config, error: prepareError } = usePrepareContractWrite({
     address: PROPERTY_MANAGER_ADDRESS,
     abi: PropertyManagerABI,
     functionName: 'addProperty',
-    args: rentAmount && securityDeposit 
-      ? [parseEther(rentAmount), parseEther(securityDeposit)]
-      : undefined,
-    enabled: Boolean(rentAmount && securityDeposit),
+    args: rentInWei && depositInWei ? [rentInWei, depositInWei] : undefined,
+    enabled: Boolean(rentInWei && depositInWei),
+    // Add these options
+    account: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+    chainId: 1337,
+    value: 0n
   })
 
-  const { 
-    writeAsync,
-    isLoading,
-    isSuccess,
-  } = useContractWrite(config)
+  if (prepareError) {
+    console.log('Prepare error:', prepareError)
+  }
 
-  return { 
-    addProperty: writeAsync,
-    isLoading,
-    isSuccess,
+  const { writeAsync, error: writeError } = useContractWrite(config)
+
+  if (writeError) {
+    console.log('Write error:', writeError)
+  }
+
+  return {
+    writeAsync,
+    prepareError,
+    writeError
   }
 }
 
