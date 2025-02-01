@@ -1,24 +1,39 @@
-// src/components/dashboard/QuickActions.tsx
-'use client'
+"use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from "react"
+import { useAddProperty, useTestConnection } from "@/hooks/usePropertyManager"
 
 export default function QuickActions() {
   const [showForm, setShowForm] = useState(false)
-  const [rentAmount, setRentAmount] = useState('')
-  const [securityDeposit, setSecurityDeposit] = useState('')
+  const [rentAmount, setRentAmount] = useState("")
+  const [securityDeposit, setSecurityDeposit] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { addProperty, isLoading, isSuccess, error } = useAddProperty()
+  const { data: isConnected, isError: isConnectionError } = useTestConnection()
+
+  useEffect(() => {
+    console.log("Connection test result:", isConnected)
+    if (isConnectionError) {
+      console.error("Error connecting to the contract")
+    }
+  }, [isConnected, isConnectionError])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Submitting:', { rentAmount, securityDeposit })
-    // Will add contract interaction here
-    setShowForm(false)
+    console.log("Submitting:", { rentAmount, securityDeposit })
+
+    const success = await addProperty(rentAmount, securityDeposit)
+    if (success) {
+      setShowForm(false)
+      setRentAmount("")
+      setSecurityDeposit("")
+    }
   }
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
-      
+
       {!showForm ? (
         <button
           onClick={() => setShowForm(true)}
@@ -57,9 +72,10 @@ export default function QuickActions() {
           <div className="flex space-x-4">
             <button
               type="submit"
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              disabled={isLoading}
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
             >
-              Add Property
+              {isLoading ? "Adding..." : "Add Property"}
             </button>
             <button
               type="button"
@@ -71,6 +87,8 @@ export default function QuickActions() {
           </div>
         </form>
       )}
+      {error && <p className="text-red-500 mt-2">Error: {error.message}</p>}
+      {isSuccess && <p className="text-green-500 mt-2">Property added successfully!</p>}
     </div>
   )
 }

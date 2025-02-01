@@ -3,10 +3,10 @@
 
 import { WagmiConfig, createConfig, configureChains } from 'wagmi'
 import { Chain } from 'wagmi/chains'
-import { publicProvider } from 'wagmi/providers/public'
+import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
 
 const hardhat: Chain = {
-  id: 1337,  // Matches your MetaMask
+  id: 1337,  // Keep your existing chain ID
   name: 'Hardhat',
   network: 'hardhat',
   nativeCurrency: {
@@ -24,15 +24,20 @@ const hardhat: Chain = {
   }
 }
 
-const { chains, publicClient, webSocketPublicClient } = configureChains(
+const { chains, publicClient } = configureChains(
   [hardhat],
-  [publicProvider()]
+  [
+    jsonRpcProvider({
+      rpc: () => ({
+        http: 'http://127.0.0.1:8545',
+      }),
+    }),
+  ]
 )
 
 const config = createConfig({
   autoConnect: true,
-  publicClient,
-  webSocketPublicClient
+  publicClient
 })
 
 export function WagmiProvider({ children }: { children: React.ReactNode }) {

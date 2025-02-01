@@ -5,6 +5,7 @@ import { useContractRead, useContractWrite, usePrepareContractWrite } from 'wagm
 import { PropertyManagerABI } from '@/contracts/abis/PropertyManager'
 import { PROPERTY_MANAGER_ADDRESS } from '@/constants/contracts'
 import { parseEther } from 'viem'
+import { useState } from 'react'
 
 // Read hooks
 export function usePropertyCount() {
@@ -26,61 +27,92 @@ export function useProperty(propertyId: bigint) {
   })
 }
 
-// src/hooks/usePropertyManager.ts
-export function useAddProperty(rentAmount?: string, securityDeposit?: string) {
-  const rentInWei = rentAmount ? parseEther(rentAmount) : undefined
-  const depositInWei = securityDeposit ? parseEther(securityDeposit) : undefined
+export function useAddProperty() {
+  const [rentAmount, setRentAmount] = useState<string>("")
+  const [securityDeposit, setSecurityDeposit] = useState<string>("")
 
-  console.log('Preparing values:', {
-    rentInWei: rentInWei?.toString(),
-    depositInWei: depositInWei?.toString()
-  })
-
-  const { config, error: prepareError } = usePrepareContractWrite({
+  const {
+    config,
+    error: prepareError,
+    isError: isPrepareError,
+  } = usePrepareContractWrite({
     address: PROPERTY_MANAGER_ADDRESS,
     abi: PropertyManagerABI,
-    functionName: 'addProperty',
-    args: rentInWei && depositInWei ? [rentInWei, depositInWei] : undefined,
-    enabled: Boolean(rentInWei && depositInWei),
-    // Add these options
-    account: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-    chainId: 1337,
-    value: 0n
+    functionName: "addProperty",
+    args: rentAmount && securityDeposit ? [parseEther(rentAmount), parseEther(securityDeposit)] : undefined,
+    enabled: Boolean(rentAmount && securityDeposit),
   })
 
-  if (prepareError) {
-    console.log('Prepare error:', prepareError)
-  }
+  const { writeAsync, isLoading, isSuccess, error: writeError } = useContractWrite(config)
 
-  const { writeAsync, error: writeError } = useContractWrite(config)
+  const addProperty = async (rent: string, deposit: string) => {
+    try {
+      console.log("Contract Address:", PROPERTY_MANAGER_ADDRESS)
+      console.log("Setting values:", { rent, deposit })
 
-  if (writeError) {
-    console.log('Write error:', writeError)
+      setRentAmount(rent)
+      setSecurityDeposit(deposit)
+
+      // Wait for the prepare to complete
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      if (!writeAsync) {
+        console.error("Write not ready", { prepareError, isPrepareError })
+        return false
+      }
+
+      const rentInWei = parseEther(rent)
+      const depositInWei = parseEther(deposit)
+
+      console.log("Sending values:", {
+        rentAmount: rent,
+        securityDeposit: deposit,
+        rentInWei: rentInWei.toString(),
+        depositInWei: depositInWei.toString(),
+      })
+
+      const tx = await writeAsync()
+      console.log("Transaction submitted:", tx)
+
+      return true
+    } catch (error) {
+      console.error("Error details:", error)
+      return false
+    }
   }
 
   return {
-    writeAsync,
-    prepareError,
-    writeError
+    addProperty,
+    isLoading,
+    isSuccess,
+    error: writeError,
   }
 }
 
-export function useInitiateLease() {
-  const { config } = usePrepareContractWrite({
+// Add this new hook to test the connection
+export function useTestConnection() {
+  return useContractRead({
     address: PROPERTY_MANAGER_ADDRESS,
     abi: PropertyManagerABI,
-    functionName: 'inititateLease',
+    functionName: "testConnection",
   })
-  return useContractWrite(config)
 }
 
-export function usePayRent() {
-  const { config } = usePrepareContractWrite({
-    address: PROPERTY_MANAGER_ADDRESS,
-    abi: PropertyManagerABI,
-    functionName: 'payRent',
-  })
-  return useContractWrite(config)
-}
+// export function useInitiateLease() {
+//   const { config } = usePrepareContractWrite({
+//     address: PROPERTY_MANAGER_ADDRESS,
+//     abi: PropertyManagerABI,
+//     functionName: 'inititateLease',
+//   })
+//   return useContractWrite(config)
+// }
 
+// export function usePayRent() {
+//   const { config } = usePrepareContractWrite({
+//     address: PROPERTY_MANAGER_ADDRESS,
+//     abi: PropertyManagerABI,
+//     functionName: 'payRent',
+//   })
+//   return useContractWrite(config)
+// }
 
