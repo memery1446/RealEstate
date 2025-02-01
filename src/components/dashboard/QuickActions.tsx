@@ -5,34 +5,65 @@ import { useAddProperty, useTestConnection } from "@/hooks/usePropertyManager"
 
 export default function QuickActions() {
   const [showForm, setShowForm] = useState(false)
-  const [rentAmount, setRentAmount] = useState("")
-  const [securityDeposit, setSecurityDeposit] = useState("")
+  const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected" | "unknown">("unknown")
 
-  const { addProperty, isLoading, isSuccess, error } = useAddProperty()
+  const { addProperty, isLoading, isSuccess, isPrepared, prepareError, setRentAmount, setSecurityDeposit } =
+    useAddProperty()
   const { data: isConnected, isError: isConnectionError } = useTestConnection()
 
   useEffect(() => {
-    console.log("Connection test result:", isConnected)
-    if (isConnectionError) {
-      console.error("Error connecting to the contract")
+    if (isConnected === true) {
+      setConnectionStatus("connected")
+    } else if (isConnectionError) {
+      setConnectionStatus("disconnected")
+    } else {
+      setConnectionStatus("unknown")
     }
   }, [isConnected, isConnectionError])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    console.log("isPrepared:", isPrepared)
+    console.log("prepareError:", prepareError)
+  }, [isPrepared, prepareError])
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    const rentAmount = formData.get("rentAmount") as string
+    const securityDeposit = formData.get("securityDeposit") as string
+
     console.log("Submitting:", { rentAmount, securityDeposit })
 
     const success = await addProperty(rentAmount, securityDeposit)
     if (success) {
       setShowForm(false)
-      setRentAmount("")
-      setSecurityDeposit("")
+    }
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    if (name === "rentAmount") {
+      setRentAmount(value)
+    } else if (name === "securityDeposit") {
+      setSecurityDeposit(value)
     }
   }
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
+
+      <div className="mb-4">
+        Connection Status:
+        {connectionStatus === "connected" && <span className="text-green-500 ml-2">Connected</span>}
+        {connectionStatus === "disconnected" && <span className="text-red-500 ml-2">Disconnected</span>}
+        {connectionStatus === "unknown" && <span className="text-yellow-500 ml-2">Unknown</span>}
+      </div>
+
+      <div className="mb-4">
+        Preparation Status: {isPrepared ? "Prepared" : "Not Prepared"}
+        {prepareError && <p className="text-red-500">Prepare Error: {prepareError.message}</p>}
+      </div>
 
       {!showForm ? (
         <button
@@ -48,8 +79,8 @@ export default function QuickActions() {
               Monthly Rent (ETH)
               <input
                 type="text"
-                value={rentAmount}
-                onChange={(e) => setRentAmount(e.target.value)}
+                name="rentAmount"
+                onChange={handleInputChange}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 placeholder="0.1"
                 required
@@ -61,8 +92,8 @@ export default function QuickActions() {
               Security Deposit (ETH)
               <input
                 type="text"
-                value={securityDeposit}
-                onChange={(e) => setSecurityDeposit(e.target.value)}
+                name="securityDeposit"
+                onChange={handleInputChange}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 placeholder="0.2"
                 required
@@ -72,10 +103,10 @@ export default function QuickActions() {
           <div className="flex space-x-4">
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || connectionStatus !== "connected" || !isPrepared}
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
             >
-              {isLoading ? "Adding..." : "Add Property"}
+              {isLoading ? "Adding..." : isPrepared ? "Add Property" : "Preparing..."}
             </button>
             <button
               type="button"
@@ -87,7 +118,6 @@ export default function QuickActions() {
           </div>
         </form>
       )}
-      {error && <p className="text-red-500 mt-2">Error: {error.message}</p>}
       {isSuccess && <p className="text-green-500 mt-2">Property added successfully!</p>}
     </div>
   )

@@ -1,12 +1,13 @@
-'use client'
+"use client"
 
-import { usePropertyCount, useProperty } from '@/hooks/usePropertyManager'
-import { useState, useEffect } from 'react'
+import { usePropertyCount, useProperty } from "@/hooks/usePropertyManager"
+import { useState, useEffect } from "react"
 
 export default function Occupancy() {
   const { data: propertyCount } = usePropertyCount()
   const [rate, setRate] = useState<string>("Loading...")
   const [isCalculating, setIsCalculating] = useState(true)
+  const properties = []
 
   useEffect(() => {
     async function calculateOccupancy() {
@@ -15,15 +16,17 @@ export default function Occupancy() {
         setIsCalculating(false)
         return
       }
-      
+
       let rentedCount = 0
       const count = Number(propertyCount)
-      
+
       // Only proceed with calculation if there are properties
       if (count > 0) {
         for (let i = 1; i <= count; i++) {
-          const property = await useProperty(BigInt(i))
-          if (property && property.status === 1) { // 1 = PropertyStatus.Rented
+          const { data: property } = useProperty(BigInt(i))
+          properties.push(property)
+          if (property && property.status === 1) {
+            // 1 = PropertyStatus.Rented
             rentedCount++
           }
         }
@@ -32,7 +35,7 @@ export default function Occupancy() {
       } else {
         setRate("0.0%")
       }
-      
+
       setIsCalculating(false)
     }
 
@@ -44,9 +47,7 @@ export default function Occupancy() {
       <div>
         <h3 className="text-lg font-medium text-gray-900">Occupancy Rate</h3>
         <div className="mt-1">
-          <p className="text-2xl font-semibold text-gray-900">
-            {rate}
-          </p>
+          <p className="text-2xl font-semibold text-gray-900">{isCalculating ? "Calculating..." : rate}</p>
         </div>
       </div>
     </div>
