@@ -132,21 +132,26 @@ export default function QuickActions() {
     }
   }
 
-  const handleSetMaintenance = async () => {
-    if (!selectedProperty) return
-    
-    try {
-      const tx = await setMaintenance({
-        args: [BigInt(selectedProperty), true],
-      })
-      alert("Property set to maintenance mode!")
-      setShowManageForm(false)
-      setSelectedProperty("")
-    } catch (err) {
-      console.error("Error setting maintenance:", err)
-      alert("Failed to set maintenance status. Check console for details.")
-    }
+const handleSetMaintenance = async () => {
+  if (!selectedProperty) return
+  
+  if (selectedPropertyData.status === 1) {
+    alert("Cannot set maintenance status on a rented property. Please end lease first.")
+    return
   }
+  
+  try {
+    const tx = await setMaintenance({
+      args: [BigInt(selectedProperty), true],
+    })
+    alert("Property set to maintenance mode!")
+    setShowManageForm(false)
+    setSelectedProperty("")
+  } catch (err) {
+    console.error("Error setting maintenance:", err)
+    alert("Failed to set maintenance status: Property must not be rented")
+  }
+}
 
   const getStatusText = (status) => {
     if (!status && status !== 0) return "Unknown"
@@ -319,14 +324,14 @@ export default function QuickActions() {
               End Lease
             </button>
           )}
-          {selectedPropertyData.status !== 2 && (
-            <button
-              onClick={handleSetMaintenance}
-              className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded"
-            >
-              Set Maintenance
-            </button>
-          )}
+{selectedPropertyData.status !== 2 && selectedPropertyData.status !== 1 && (
+  <button
+    onClick={handleSetMaintenance}
+    className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded"
+  >
+    Set Maintenance
+  </button>
+)}
         </div>
       </div>
     ) : (
