@@ -1,70 +1,50 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useAddProperty, useTestConnection } from "@/hooks/usePropertyManager"
+import { useState } from "react"
+import { useAddProperty } from "@/hooks/usePropertyManager"
+import { useConnect } from "wagmi"
+import { InjectedConnector } from "wagmi/connectors/injected"
 
 export default function QuickActions() {
   const [showForm, setShowForm] = useState(false)
-  const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected" | "unknown">("unknown")
+  const [rent, setRent] = useState("")
+  const [deposit, setDeposit] = useState("")
+  const { addProperty, isLoading, error, isConnected } = useAddProperty()
 
-  const { addProperty, isLoading, isSuccess, isPrepared, prepareError, setRentAmount, setSecurityDeposit } =
-    useAddProperty()
-  const { data: isConnected, isError: isConnectionError } = useTestConnection()
+  const { connect } = useConnect({
+    connector: new InjectedConnector(),
+  })
 
-  useEffect(() => {
-    if (isConnected === true) {
-      setConnectionStatus("connected")
-    } else if (isConnectionError) {
-      setConnectionStatus("disconnected")
-    } else {
-      setConnectionStatus("unknown")
+  const handleSubmit = async () => {
+    if (!isConnected) {
+      try {
+        await connect()
+      } catch (error) {
+        console.error("Failed to connect wallet:", error)
+        alert("Please connect your wallet to add a property.")
+        return
+      }
     }
-  }, [isConnected, isConnectionError])
 
-  useEffect(() => {
-    console.log("isPrepared:", isPrepared)
-    console.log("prepareError:", prepareError)
-  }, [isPrepared, prepareError])
+    if (!rent || !deposit) {
+      alert("Please enter both rent and security deposit amounts.")
+      return
+    }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    const rentAmount = formData.get("rentAmount") as string
-    const securityDeposit = formData.get("securityDeposit") as string
-
-    console.log("Submitting:", { rentAmount, securityDeposit })
-
-    const success = await addProperty(rentAmount, securityDeposit)
+    const success = await addProperty(rent, deposit)
     if (success) {
       setShowForm(false)
-    }
-  }
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    if (name === "rentAmount") {
-      setRentAmount(value)
-    } else if (name === "securityDeposit") {
-      setSecurityDeposit(value)
+      setRent("")
+      setDeposit("")
+      alert("Property addition initiated. Please check your wallet for transaction confirmation.")
+    } else {
+      alert("Failed to initiate property addition. Please check the console for more details.")
     }
   }
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
-
-      <div className="mb-4">
-        Connection Status:
-        {connectionStatus === "connected" && <span className="text-green-500 ml-2">Connected</span>}
-        {connectionStatus === "disconnected" && <span className="text-red-500 ml-2">Disconnected</span>}
-        {connectionStatus === "unknown" && <span className="text-yellow-500 ml-2">Unknown</span>}
-      </div>
-
-      <div className="mb-4">
-        Preparation Status: {isPrepared ? "Prepared" : "Not Prepared"}
-        {prepareError && <p className="text-red-500">Prepare Error: {prepareError.message}</p>}
-      </div>
-
       {!showForm ? (
         <button
           onClick={() => setShowForm(true)}
@@ -73,52 +53,42 @@ export default function QuickActions() {
           Add Property
         </button>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Monthly Rent (ETH)
-              <input
-                type="text"
-                name="rentAmount"
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="0.1"
-                required
-              />
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Monthly Rent (ETH)</label>
+            <input
+              type="text"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+              placeholder="0.1"
+              value={rent}
+              onChange={(e) => setRent(e.target.value)}
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Security Deposit (ETH)
-              <input
-                type="text"
-                name="securityDeposit"
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="0.2"
-                required
-              />
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Security Deposit (ETH)</label>
+            <input
+              type="text"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+              placeholder="0.2"
+              value={deposit}
+              onChange={(e) => setDeposit(e.target.value)}
+            />
           </div>
           <div className="flex space-x-4">
             <button
-              type="submit"
-              disabled={isLoading || connectionStatus !== "connected" || !isPrepared}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+              onClick={handleSubmit}
+              className="bg-blue-500 text-white font-bold py-2 px-4 rounded"
+              disabled={isLoading}
             >
-              {isLoading ? "Adding..." : isPrepared ? "Add Property" : "Preparing..."}
+              {isLoading ? "Submitting..." : isConnected ? "Submit" : "Connect Wallet"}
             </button>
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-            >
+            <button onClick={() => setShowForm(false)} className="bg-gray-500 text-white font-bold py-2 px-4 rounded">
               Cancel
             </button>
           </div>
-        </form>
+          {error && <p className="text-red-500">{error.message}</p>}
+        </div>
       )}
-      {isSuccess && <p className="text-green-500 mt-2">Property added successfully!</p>}
     </div>
   )
 }

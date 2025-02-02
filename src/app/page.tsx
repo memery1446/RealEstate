@@ -1,9 +1,8 @@
-// src/app/dashboard/page.tsx
-import PropertyCount from '@/components/dashboard/PropertyCount'
-import Occupancy from '@/components/dashboard/Occupancy'
-import Revenue from '@/components/dashboard/Revenue'
-import { ConnectButton } from '@/components/ui/ConnectButton'
-import QuickActions from '@/components/dashboard/QuickActions'
+import PropertyCount from "@/components/dashboard/PropertyCount"
+import Occupancy from "@/components/dashboard/Occupancy"
+import Revenue from "@/components/dashboard/Revenue"
+import QuickActions from "@/components/dashboard/QuickActions"
+import { ConnectButton } from "@/components/ui/ConnectButton"
 
 export default function Dashboard() {
   return (
