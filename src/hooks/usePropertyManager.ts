@@ -13,12 +13,13 @@ export function usePropertyCount() {
   })
 }
 
-export function useProperty(propertyId: bigint) {
+export function useProperty(propertyId?: bigint) {
   return useContractRead({
     address: PROPERTY_MANAGER_ADDRESS,
     abi: PropertyManagerABI,
     functionName: "properties",
-    args: [propertyId],
+    args: propertyId ? [propertyId] : undefined,
+    enabled: !!propertyId,  // Only run the query if we have a propertyId
     watch: true,
   })
 }

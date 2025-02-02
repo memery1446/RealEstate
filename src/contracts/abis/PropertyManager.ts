@@ -50,6 +50,19 @@ export const PropertyManagerABI = [
           "internalType": "uint256",
           "name": "propertyId",
           "type": "uint256"
+        }
+      ],
+      "name": "LeaseEnded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "propertyId",
+          "type": "uint256"
         },
         {
           "indexed": true,
@@ -97,6 +110,25 @@ export const PropertyManagerABI = [
         }
       ],
       "name": "MaintenanceResolved",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "propertyId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "maintenance",
+          "type": "bool"
+        }
+      ],
+      "name": "MaintenanceStatusUpdated",
       "type": "event"
     },
     {
@@ -235,6 +267,19 @@ export const PropertyManagerABI = [
         }
       ],
       "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_propertyId",
+          "type": "uint256"
+        }
+      ],
+      "name": "endLease",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -462,6 +507,24 @@ export const PropertyManagerABI = [
         }
       ],
       "name": "requestMaintenance",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_propertyId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "_maintenance",
+          "type": "bool"
+        }
+      ],
+      "name": "setMaintenanceStatus",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

@@ -44,7 +44,9 @@ contract PropertyManager is Ownable, ReentrancyGuard, Pausable {
     event RentPaid(uint256 indexed propertyId, address indexed tenant, uint256 amount);
     event MaintenanceRequested(uint256 indexed propertyId, uint256 requestId);
     event MaintenanceResolved(uint256 indexed propertyId, uint256 requestId);
-    
+    event LeaseEnded(uint256 indexed propertyId);
+    event MaintenanceStatusUpdated(uint256 indexed propertyId, bool maintenance);
+
     // Modifiers
     modifier propertyExists(uint256 propertyId) {
         require(properties[propertyId].active, "Property does not exist");
@@ -138,6 +140,36 @@ contract PropertyManager is Ownable, ReentrancyGuard, Pausable {
         
         emit RentPaid(_propertyId, msg.sender, property.rentAmount);
     }
+
+    // Added 2.2
+
+    function endLease(uint256 _propertyId) external propertyExists(_propertyId) {
+        Property storage property = properties[_propertyId];
+        require(msg.sender == property.owner, "Not property owner");
+        require(property.status == PropertyStatus.Rented, "Property not rented");
+        
+        property.status = PropertyStatus.Available;
+        property.currentTenant = address(0);
+        property.leaseStart = 0;
+        property.leaseEnd = 0;
+        
+        emit LeaseEnded(_propertyId);
+    }
+
+    function setMaintenanceStatus(uint256 _propertyId, bool _maintenance) 
+        external 
+        propertyExists(_propertyId) 
+    {
+        Property storage property = properties[_propertyId];
+        require(msg.sender == property.owner, "Not property owner");
+        require(property.status != PropertyStatus.Rented, "Cannot maintain rented property");
+        
+        property.status = _maintenance ? PropertyStatus.Maintenance : PropertyStatus.Available;
+        
+        emit MaintenanceStatusUpdated(_propertyId, _maintenance);
+    }
+
+    // end Added 2.2
 
     function requestMaintenance(
         uint256 _propertyId,
