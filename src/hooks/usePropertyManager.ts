@@ -76,6 +76,53 @@ export function useAddProperty() {
   }
 }
 
+export function useInitiateLease() {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
+  const { isConnected } = useAccount()
+
+  const { writeAsync } = useContractWrite({
+    address: PROPERTY_MANAGER_ADDRESS,
+    abi: PropertyManagerABI,
+    functionName: "inititateLease",
+  })
+
+  const initiateLease = useCallback(
+    async (propertyId: string, tenantAddress: string, duration: string) => {
+      if (!isConnected) {
+        setError(new Error("Wallet not connected"))
+        return false
+      }
+
+      setIsLoading(true)
+      setError(null)
+
+      try {
+        const tx = await writeAsync({
+          args: [BigInt(propertyId), tenantAddress, BigInt(duration)],
+        })
+
+        console.log("Lease initiated:", tx)
+        return true
+      } catch (err) {
+        console.error("Error details:", err)
+        setError(err instanceof Error ? err : new Error("Unknown error occurred"))
+        return false
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [writeAsync, isConnected],
+  )
+
+  return {
+    initiateLease,
+    isLoading,
+    error,
+    isConnected,
+  }
+}
+
 export function useTestConnection() {
   return useContractRead({
     address: PROPERTY_MANAGER_ADDRESS,

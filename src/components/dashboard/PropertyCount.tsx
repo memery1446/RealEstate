@@ -10,11 +10,13 @@ export default function PropertyCount() {
   useEffect(() => {
     if (isLoading) {
       setCount("Loading...")
-    } else if (isError) {
-      setCount("Error loading count")
-    } else {
-      setCount(propertyCount?.toString() || "0")
+      return
     }
+    if (isError) {
+      setCount("Error loading count")
+      return
+    }
+    setCount(propertyCount?.toString() || "0")
   }, [propertyCount, isLoading, isError])
 
   return (
