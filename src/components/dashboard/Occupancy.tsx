@@ -18,20 +18,20 @@ export default function Occupancy() {
     )
   }, [propertyCount])
 
-  // Fetch all properties data using useProperty hook
-  const properties = propertyIds.map(id => {
+  // Fetch all properties data using useProperty hook at the top level
+  const propertiesData = propertyIds.map(id => {
     const { data } = useProperty(id)
     return data
   })
 
   useEffect(() => {
-    if (!propertyCount || properties.length === 0) {
+    if (!propertyCount || propertiesData.length === 0) {
       setOccupancyRate("0%")
       setIsCalculating(false)
       return
     }
 
-    const validProperties = properties.filter(Boolean)
+    const validProperties = propertiesData.filter(Boolean)
     const rentedProperties = validProperties.filter(
       property => property && Number(property.status) === 1
     ).length
@@ -40,12 +40,12 @@ export default function Occupancy() {
     if (total === 0) {
       setOccupancyRate("0%")
     } else {
-      const rate = (rentedProperties / total) * 100
-      setOccupancyRate(`${rate.toFixed(1)}%`)
+      const calculatedRate = (rentedProperties / total) * 100
+      setOccupancyRate(`${calculatedRate.toFixed(1)}%`)
     }
 
     setIsCalculating(false)
-  }, [propertyCount, properties])
+  }, [propertyCount, propertiesData])
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -58,10 +58,10 @@ export default function Occupancy() {
           <p className="text-2xl font-semibold text-gray-900">
             {isCalculating ? "Calculating..." : occupancyRate}
           </p>
-          {!isCalculating && properties.length > 0 && (
+          {!isCalculating && propertiesData.length > 0 && (
             <div className="mt-2">
               <p className="text-sm text-gray-600">
-                {properties.filter(p => p && Number(p.status) === 1).length} out of {properties.length} properties rented
+                {propertiesData.filter(p => p && Number(p.status) === 1).length} out of {propertiesData.length} properties rented
               </p>
             </div>
           )}
